@@ -1,66 +1,79 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 import asyncio
 import os
-from bugfiner_runner import parse_args, main as bugfiner_main, REPORT_DIR
+import sys
+
+# Import your bugfiner runner
+from bugfiner_runner import main as bugfiner_main, REPORT_DIR
 
 app = Flask(__name__)
 
-# Ensure report directory exists
+# Directories
 os.makedirs(REPORT_DIR, exist_ok=True)
 
-# Simple in-memory logs for live display
-live_logs = []
+MEDIA_DIR = os.path.join(REPORT_DIR)
+os.makedirs(MEDIA_DIR, exist_ok=True)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        bug_desc = request.form.get("bug_desc")
-        test_url = request.form.get("test_url")
-        test_name = request.form.get("test_name")
-        gemini_key = request.form.get("gemini_key")
-        headful = request.form.get("headful") == "on"
-        record_video = request.form.get("record_video") != "off"
+        bug_desc = request.form.get("bug_desc", "").strip()
+        test_url = request.form.get("test_url", "").strip()
 
-        args = [
-            "--url", test_url,
-            "--test-name", test_name,
-            "--bug", bug_desc,
-        ]
-        if headful:
-            args.append("--headful")
-        if not record_video:
-            args.append("--no-video")
-        if gemini_key:
-            args += ["--gemini-key", gemini_key]
+        if bug_desc and test_url:
+            # Prepare args for bugfiner
+            args = [
+                "--url", test_url,
+                "--test-name", "auto_test",
+                "--bug", bug_desc,
+            ]
 
-        asyncio.run(run_bugfiner(args))
-        return redirect(url_for("index"))
+            # Run bugfiner synchronously
+            asyncio.run(run_bugfiner(args))
 
-    # Read all reports
-    reports = []
-    for filename in sorted(os.listdir(REPORT_DIR), reverse=True):
-        if filename.endswith(".md"):
-            path = os.path.join(REPORT_DIR, filename)
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                reports.append({"name": filename, "content": content})
-            except:
-                reports.append({"name": filename, "content": "Error reading file."})
+            return redirect(url_for("index"))
 
-    return render_template("index.html", reports=reports, logs="\n".join(live_logs))
+    # Load latest report
+    latest_report = None
+    reports = [
+        f for f in sorted(os.listdir(REPORT_DIR), reverse=True) if f.endswith(".md")
+    ]
+    if reports:
+        latest_file = os.path.join(REPORT_DIR, reports[0])
+        try:
+            with open(latest_file, "r", encoding="utf-8") as f:
+                latest_report = f.read()
+        except Exception as e:
+            latest_report = f"⚠️ Error reading report: {e}"
+
+    # Collect gallery items
+    gallery_items = []
+    if os.path.exists(MEDIA_DIR):
+        for f in sorted(os.listdir(MEDIA_DIR)):
+            file_extension = os.path.splitext(f)[1].lower()
+            if file_extension in (".png", ".jpg", ".jpeg"):
+                gallery_items.append({"filename": f, "type": "image"})
+            elif file_extension in (".mp4", ".webm"):
+                gallery_items.append({"filename": f, "type": "video"})
+
+    return render_template("index.html", report=latest_report, gallery=gallery_items)
+
+
+@app.route("/media/<path:filename>")
+def media(filename):
+    """
+    Serve media files (screenshots/videos).
+    """
+    return send_from_directory(MEDIA_DIR, filename)
 
 
 async def run_bugfiner(args_list):
-    import sys
+    """
+    Runs bugfiner's main function with sys.argv patched.
+    """
     sys.argv = ["bugfiner_runner.py"] + args_list
     await bugfiner_main()
-
-
-@app.route("/get-logs")
-def get_logs():
-    """Return live logs as JSON"""
-    return jsonify({"logs": "\n".join(live_logs)})
 
 
 if __name__ == "__main__":

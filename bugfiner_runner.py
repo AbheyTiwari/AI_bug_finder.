@@ -21,7 +21,7 @@ from playwright.async_api import async_playwright
 # ====== CONFIG AREA ======
 # =========================
 
-OUTPUT_DIR = "./Mini_projects/"
+OUTPUT_DIR = "./bug_reports/"
 REPORT_DIR = "./bug_reports/"
 TEST_NAME_DEFAULT = "LoginButton_Disappears_FailedAttempt"
 LOCAL_HTML_DEFAULT = "http://localhost:8000/login.html"   # change at runtime with --url
