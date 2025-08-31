@@ -89,11 +89,6 @@ BugFiner/
         </ul>
     </section>
     <section>
-        <h2>🔗 Links</h2>
-        <a href="https://github.com/AbheyTiwari/BugFiner" class="btn" target="_blank">GitHub Repository</a>
-        <a href="https://github.com/AbheyTiwari/BugFiner/issues" class="btn" target="_blank">Issue Tracker</a>
-    </section>
-    <section>
         <h2>⚖️ License</h2>
         <p>MIT License © 2025 <a href="https://github.com/AbheyTiwari" target="_blank">Abhey Tiwari</a></p>
     </section>
