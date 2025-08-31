@@ -30,7 +30,7 @@ GEMINI_API_KEY = Gemini_api_key          # overridable via --gemini-key or env
 VIDEO_SIZE = {"width": 1280, "height": 720}
 HEADLESS_DEFAULT = True
 RECORD_VIDEO_DEFAULT = True
-SCREENSHOT_EVERY_STEP = False  # set True if you want a screenshot at each step
+SCREENSHOT_EVERY_STEP = True  # set True if you want a screenshot at each step
 
 # Make sure output directories exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
