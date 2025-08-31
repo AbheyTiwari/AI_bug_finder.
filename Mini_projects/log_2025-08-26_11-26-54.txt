@@ -1,3 +1,0 @@
-Bug Run - 2025-08-26_11-26-54
-
-No console or step errors found.
